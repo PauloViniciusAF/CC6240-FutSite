@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  # ============ PostgreSQL (RDB) ============
+  datasource:
+    url: jdbc:postgresql://localhost:5432/futsite
+    username: futsite
+    password: futsite123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # ============ MongoDB (DB1 - Statistics) ============
+  data:
+    mongodb:
+      uri: mongodb://futsite:futsite123@localhost:27017/futsite?authSource=admin
+    redis:
+      host: localhost
+      port: 6379
+
+  # ============ Email ============
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:futsite@example.com}
+    password: ${MAIL_PASSWORD:changeme}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# ============ JWT ============
+app:
+  jwt:
+    secret: futsite-secret-key-change-in-production-must-be-256-bits-long-minimum
+    expiration-ms: 86400000
+
+# ============ CORS ============
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:5173

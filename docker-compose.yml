@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # ============ DATABASES ============
+  postgres:
+    image: postgres:16-alpine
+    container_name: futsite-postgres
+    environment:
+      POSTGRES_DB: futsite
+      POSTGRES_USER: futsite
+      POSTGRES_PASSWORD: futsite123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - futsite-net
+
+  mongodb:
+    image: mongo:7
+    container_name: futsite-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: futsite
+      MONGO_INITDB_ROOT_PASSWORD: futsite123
+      MONGO_INITDB_DATABASE: futsite
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - futsite-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: futsite-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - futsite-net
+
+  # ============ BACKEND ============
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: futsite-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/futsite
+      SPRING_DATASOURCE_USERNAME: futsite
+      SPRING_DATASOURCE_PASSWORD: futsite123
+      SPRING_DATA_MONGODB_URI: mongodb://futsite:futsite123@mongodb:27017/futsite?authSource=admin
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+    networks:
+      - futsite-net
+
+  # ============ FRONTEND ============
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: futsite-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - futsite-net
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+
+networks:
+  futsite-net:
+    driver: bridge
