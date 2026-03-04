@@ -15,8 +15,7 @@ public class RecordGoalRequest {
     @NotNull
     private Boolean ownGoal;
 
-    /** Minute in the match */
-    @NotNull
+    /** Minute in the match — auto-filled from timer if null */
     private Integer minute;
 
     private Integer second;

@@ -12,12 +12,14 @@ import com.futsite.model.enums.ChampionshipStatus;
 import com.futsite.model.enums.MatchStatus;
 import com.futsite.repository.postgres.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MatchService {
@@ -28,6 +30,7 @@ public class MatchService {
     private final UserRepository userRepository;
     private final ChampionshipService championshipService;
     private final RedisService redisService;
+    private final TeamService teamService;
     private final StatisticsService statisticsService;
 
     @Transactional
@@ -140,9 +143,13 @@ public class MatchService {
         // Invalidate standings cache
         redisService.invalidateStandingsCache(match.getChampionship().getId());
 
-        // Generate statistics in MongoDB
-        statisticsService.generateMatchStatistics(match);
-        statisticsService.updateChampionshipStatistics(match.getChampionship().getId());
+        // Generate statistics in MongoDB (non-blocking: don't fail the match finish if Mongo is down)
+        try {
+            statisticsService.generateMatchStatistics(match);
+            statisticsService.updateChampionshipStatistics(match.getChampionship().getId());
+        } catch (Exception e) {
+            log.error("Failed to generate statistics for match {}: {}", matchId, e.getMessage());
+        }
 
         return toResponse(match);
     }
@@ -156,6 +163,14 @@ public class MatchService {
             throw new BadRequestException("Can only record goals during a live or paused match");
         }
 
+        // Check goal limit before recording
+        if (match.getGoalLimit() != null && match.getGoalLimit() > 0) {
+            int totalGoals = match.getHomeScore() + match.getAwayScore();
+            if (totalGoals >= match.getGoalLimit()) {
+                throw new BadRequestException("Goal limit (" + match.getGoalLimit() + ") already reached");
+            }
+        }
+
         Team team = teamRepository.findById(request.getTeamId())
                 .orElseThrow(() -> new ResourceNotFoundException("Team not found"));
 
@@ -165,13 +180,28 @@ public class MatchService {
                     .orElseThrow(() -> new ResourceNotFoundException("Scorer not found"));
         }
 
+        // Auto-fill minute/second from timer if not provided
+        Integer minute = request.getMinute();
+        Integer second = request.getSecond();
+        if (minute == null) {
+            MatchTimerResponse timer = redisService.getTimerState(matchId);
+            if (timer != null) {
+                int elapsed = timer.getElapsedSeconds();
+                minute = elapsed / 60;
+                second = elapsed % 60;
+            } else {
+                minute = 0;
+                second = 0;
+            }
+        }
+
         Goal goal = Goal.builder()
                 .match(match)
                 .team(team)
                 .scorer(scorer)
                 .ownGoal(request.getOwnGoal())
-                .minute(request.getMinute())
-                .second(request.getSecond())
+                .minute(minute)
+                .second(second)
                 .build();
 
         goal = goalRepository.save(goal);
@@ -192,6 +222,23 @@ public class MatchService {
             }
         }
         matchRepository.save(match);
+
+        // Auto-finish if goal limit is reached
+        if (match.getGoalLimit() != null && match.getGoalLimit() > 0) {
+            int totalGoals = match.getHomeScore() + match.getAwayScore();
+            if (totalGoals >= match.getGoalLimit()) {
+                match.setStatus(MatchStatus.FINISHED);
+                matchRepository.save(match);
+                redisService.stopTimer(matchId);
+                redisService.invalidateStandingsCache(match.getChampionship().getId());
+                try {
+                    statisticsService.generateMatchStatistics(match);
+                    statisticsService.updateChampionshipStatistics(match.getChampionship().getId());
+                } catch (Exception e) {
+                    log.error("Failed to generate statistics for match {}: {}", matchId, e.getMessage());
+                }
+            }
+        }
 
         return GoalResponse.builder()
                 .id(goal.getId())
@@ -254,8 +301,8 @@ public class MatchService {
                 .id(m.getId())
                 .championshipId(m.getChampionship().getId())
                 .championshipName(m.getChampionship().getName())
-                .homeTeam(TeamService.toTeamResponse(m.getHomeTeam()))
-                .awayTeam(TeamService.toTeamResponse(m.getAwayTeam()))
+                .homeTeam(teamService.toTeamResponse(m.getHomeTeam()))
+                .awayTeam(teamService.toTeamResponse(m.getAwayTeam()))
                 .round(m.getRound())
                 .bracketPosition(m.getBracketPosition())
                 .scheduledAt(m.getScheduledAt())

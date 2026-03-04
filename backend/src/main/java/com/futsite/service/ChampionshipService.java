@@ -24,6 +24,8 @@ public class ChampionshipService {
     private final MatchRepository matchRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final AuthService authService;
+    private final TeamService teamService;
     private final RedisService redisService;
 
     @Transactional
@@ -212,6 +214,24 @@ public class ChampionshipService {
         championshipRepository.delete(championship);
     }
 
+    @Transactional
+    public ChampionshipResponse finishChampionship(Long championshipId, String managerUsername) {
+        Championship championship = getChampionshipEntity(championshipId);
+        validateManager(championship, managerUsername);
+
+        if (championship.getStatus() != ChampionshipStatus.STARTED) {
+            throw new BadRequestException("Championship must be started to finish");
+        }
+
+        championship.setStatus(ChampionshipStatus.FINISHED);
+        championship = championshipRepository.save(championship);
+
+        // Invalidate standings cache
+        redisService.invalidateStandingsCache(championshipId);
+
+        return toResponse(championship);
+    }
+
     // ====== ROUND ROBIN MATCH GENERATION ======
 
     private void generateRoundRobinMatches(Championship championship) {
@@ -320,11 +340,11 @@ public class ChampionshipService {
         return ChampionshipResponse.builder()
                 .id(c.getId())
                 .name(c.getName())
-                .manager(AuthService.toUserResponse(c.getManager()))
+                .manager(authService.toUserResponse(c.getManager()))
                 .format(c.getFormat())
                 .status(c.getStatus())
                 .sports(c.getSports())
-                .teams(c.getTeams().stream().map(TeamService::toTeamResponse).collect(Collectors.toList()))
+                .teams(c.getTeams().stream().map(teamService::toTeamResponse).collect(Collectors.toList()))
                 .homeAndAway(c.getHomeAndAway())
                 .winPoints(c.getWinPoints())
                 .drawPoints(c.getDrawPoints())

@@ -1,15 +1,33 @@
 :root {
-  --primary: #1a7a3a;
-  --primary-dark: #145c2c;
-  --primary-light: #2da44e;
+  --primary: #7c3aed;
+  --primary-dark: #5b21b6;
+  --primary-light: #a78bfa;
   --bg: #f6f8fa;
   --bg-card: #ffffff;
+  --bg-card-alt: #f6f8fa;
   --text: #1f2328;
   --text-secondary: #656d76;
   --border: #d0d7de;
   --danger: #cf222e;
   --warning: #bf8700;
   --success: #1a7f37;
+  --focus-shadow: rgba(124, 58, 237, 0.2);
+}
+
+[data-theme="dark"] {
+  --primary: #a78bfa;
+  --primary-dark: #7c3aed;
+  --primary-light: #c4b5fd;
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-card-alt: #1c2129;
+  --text: #e6edf3;
+  --text-secondary: #8b949e;
+  --border: #30363d;
+  --danger: #f85149;
+  --warning: #d29922;
+  --success: #3fb950;
+  --focus-shadow: rgba(167, 139, 250, 0.3);
 }
 
 * {
@@ -160,7 +178,7 @@ button {
 }
 
 .btn:hover {
-  background: #f3f4f6;
+  background: var(--bg-card-alt);
 }
 
 .btn-primary {
@@ -226,7 +244,11 @@ button {
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(26, 122, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--focus-shadow);
+}
+
+.form-control, select.form-control {
+  color: var(--text);
 }
 
 select.form-control {
@@ -251,7 +273,7 @@ th, td {
 }
 
 th {
-  background: #f6f8fa;
+  background: var(--bg-card-alt);
   font-weight: 600;
   color: var(--text-secondary);
   font-size: 0.8125rem;
@@ -300,7 +322,7 @@ th {
 }
 
 .auth-card {
-  background: white;
+  background: var(--bg-card);
   border-radius: 12px;
   padding: 2.5rem;
   width: 100%;
@@ -435,3 +457,31 @@ th {
   font-weight: 700;
   color: var(--primary);
 }
+
+/* Dark mode toggle */
+.theme-toggle {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: white;
+  padding: 0.375rem 0.625rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+}
+
+.theme-toggle:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+/* Dark mode badge overrides */
+[data-theme="dark"] .badge-draft { background: #1f3a5f; color: #58a6ff; }
+[data-theme="dark"] .badge-started { background: #1a3a2a; color: var(--success); }
+[data-theme="dark"] .badge-finished { background: #3d1a1a; color: var(--danger); }
+[data-theme="dark"] .badge-live { background: #1a3a2a; color: var(--success); border-color: var(--success); }
+[data-theme="dark"] .badge-paused { background: #3d3018; color: var(--warning); }
+[data-theme="dark"] .badge-scheduled { background: #21262d; color: var(--text-secondary); }
+[data-theme="dark"] .error-message { background: #3d1a1a; }
+[data-theme="dark"] .match-live-panel { background: #0d1117; }

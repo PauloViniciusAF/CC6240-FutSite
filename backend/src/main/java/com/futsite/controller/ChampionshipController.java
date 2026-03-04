@@ -81,4 +81,11 @@ public class ChampionshipController {
         championshipService.deleteChampionship(id, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/finish")
+    public ResponseEntity<ChampionshipResponse> finish(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(championshipService.finishChampionship(id, userDetails.getUsername()));
+    }
 }

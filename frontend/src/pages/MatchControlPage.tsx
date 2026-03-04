@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { matchApi } from '../api';
@@ -9,43 +9,88 @@ export default function MatchControlPage() {
   const navigate = useNavigate();
   const [match, setMatch] = useState<Match | null>(null);
   const [timer, setTimer] = useState<MatchTimer | null>(null);
+  const [displayElapsed, setDisplayElapsed] = useState(0);
+  const lastSyncRef = useRef<number>(Date.now());
+  const syncedElapsedRef = useRef<number>(0);
+  const timerStatusRef = useRef<string>('');
   const [error, setError] = useState('');
 
   // Goal form
   const [goalTeamId, setGoalTeamId] = useState('');
   const [goalScorerId, setGoalScorerId] = useState('');
   const [goalOwnGoal, setGoalOwnGoal] = useState(false);
-  const [goalMinute, setGoalMinute] = useState('');
 
   const loadMatch = useCallback(() => {
     matchApi.get(Number(id)).then(r => setMatch(r.data)).catch(() => {});
   }, [id]);
 
   const loadTimer = useCallback(() => {
-    matchApi.getTimer(Number(id)).then(r => setTimer(r.data)).catch(() => {});
+    matchApi.getTimer(Number(id)).then(r => {
+      setTimer(r.data);
+      if (r.data) {
+        syncedElapsedRef.current = r.data.elapsedSeconds;
+        lastSyncRef.current = Date.now();
+        timerStatusRef.current = r.data.status;
+        setDisplayElapsed(r.data.elapsedSeconds);
+      }
+    }).catch(() => {});
   }, [id]);
 
+  // Poll server every 5s for sync
   useEffect(() => {
     loadMatch();
+    loadTimer();
     const interval = setInterval(() => {
       loadTimer();
       loadMatch();
-    }, 2000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [id, loadMatch, loadTimer]);
 
+  // Local 1-second tick for smooth display
+  useEffect(() => {
+    const tick = setInterval(() => {
+      if (timerStatusRef.current === 'RUNNING') {
+        const now = Date.now();
+        const delta = Math.floor((now - lastSyncRef.current) / 1000);
+        setDisplayElapsed(syncedElapsedRef.current + delta);
+      }
+    }, 1000);
+    return () => clearInterval(tick);
+  }, []);
+
   const handleStart = async () => {
-    try { await matchApi.start(Number(id)); loadMatch(); loadTimer(); } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
+    try {
+      const r = await matchApi.start(Number(id));
+      setMatch(r.data);
+      loadTimer();
+    } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
   };
   const handlePause = async () => {
-    try { await matchApi.pause(Number(id)); loadMatch(); loadTimer(); } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
+    try {
+      const r = await matchApi.pause(Number(id));
+      setMatch(r.data);
+      timerStatusRef.current = 'PAUSED';
+      loadTimer();
+    } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
   };
   const handleResume = async () => {
-    try { await matchApi.resume(Number(id)); loadMatch(); loadTimer(); } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
+    try {
+      const r = await matchApi.resume(Number(id));
+      setMatch(r.data);
+      timerStatusRef.current = 'RUNNING';
+      lastSyncRef.current = Date.now();
+      loadTimer();
+    } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
   };
   const handleFinish = async () => {
     if (!confirm('Finalizar esta partida?')) return;
-    try { await matchApi.finish(Number(id)); loadMatch(); } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
+    try {
+      const r = await matchApi.finish(Number(id));
+      setMatch(r.data);
+      timerStatusRef.current = 'STOPPED';
+      setTimer(null);
+    } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
   };
   const handleAdjust = async (delta: number) => {
     try { const r = await matchApi.adjustTimer(Number(id), delta); setTimer(r.data); } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
@@ -59,12 +104,10 @@ export default function MatchControlPage() {
         teamId: Number(goalTeamId),
         scorerId: goalOwnGoal ? undefined : (goalScorerId ? Number(goalScorerId) : undefined),
         ownGoal: goalOwnGoal,
-        minute: Number(goalMinute),
       });
       setGoalTeamId('');
       setGoalScorerId('');
       setGoalOwnGoal(false);
-      setGoalMinute('');
       loadMatch();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao registrar gol');
@@ -114,7 +157,7 @@ export default function MatchControlPage() {
 
           {timer && (
             <div className="timer-display">
-              ⏱ {formatTime(timer.elapsedSeconds)} / {formatTime(timer.totalSeconds)}
+              ⏱ {formatTime(displayElapsed)} / {formatTime(timer.totalSeconds)}
             </div>
           )}
 
@@ -171,9 +214,9 @@ export default function MatchControlPage() {
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Minuto</label>
-                  <input className="form-control" type="number" value={goalMinute}
-                    onChange={e => setGoalMinute(e.target.value)} required min="0" />
+                  <label>Minuto (automático)</label>
+                  <input className="form-control" type="text" readOnly
+                    value={formatTime(displayElapsed)} />
                 </div>
               </div>
               <div className="form-group">

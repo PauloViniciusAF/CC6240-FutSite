@@ -6,7 +6,6 @@ import com.futsite.model.document.ChampionshipStatistics.TopScorer;
 import com.futsite.model.document.MatchStatistics;
 import com.futsite.model.document.MatchStatistics.GoalDetail;
 import com.futsite.model.entity.*;
-import com.futsite.model.enums.ChampionshipFormat;
 import com.futsite.model.enums.MatchStatus;
 import com.futsite.repository.mongo.ChampionshipStatisticsRepository;
 import com.futsite.repository.mongo.MatchStatisticsRepository;

@@ -84,7 +84,7 @@ public class AuthService {
                 .stream().map(this::toUserResponse).collect(Collectors.toList());
     }
 
-    public static UserResponse toUserResponse(User user) {
+    public UserResponse toUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())

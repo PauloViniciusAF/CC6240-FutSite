@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { championshipApi, teamApi, matchApi } from '../api';
+import { championshipApi, teamApi, matchApi, statsApi } from '../api';
 import { useAuth } from '../AuthContext';
-import type { Championship, Team, Match as MatchType } from '../types';
+import type { Championship, Team, Match as MatchType, ChampionshipStatistics } from '../types';
 
 export default function ChampionshipDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,13 +14,19 @@ export default function ChampionshipDetailPage() {
   const [matches, setMatches] = useState<MatchType[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState('');
   const [error, setError] = useState('');
+  const [champStats, setChampStats] = useState<ChampionshipStatistics | null>(null);
 
   // Match creation
   const [showCreateMatch, setShowCreateMatch] = useState(false);
   const [matchForm, setMatchForm] = useState({ homeTeamId: '', awayTeamId: '', durationSeconds: '2700', goalLimit: '0', round: '1' });
 
   const loadChamp = () => {
-    championshipApi.get(Number(id)).then(r => setChamp(r.data)).catch(() => {});
+    championshipApi.get(Number(id)).then(r => {
+      setChamp(r.data);
+      if (r.data.status === 'FINISHED' || r.data.status === 'STARTED') {
+        statsApi.getChampionship(Number(id)).then(s => setChampStats(s.data)).catch(() => {});
+      }
+    }).catch(() => {});
     matchApi.getByChampionship(Number(id)).then(r => setMatches(r.data)).catch(() => {});
   };
 
@@ -32,6 +38,7 @@ export default function ChampionshipDetailPage() {
   const isManager = champ && user && champ.manager.id === user.id;
   const isDraft = champ?.status === 'DRAFT';
   const isStarted = champ?.status === 'STARTED';
+  const isFinished = champ?.status === 'FINISHED';
 
   const handleAddTeam = async () => {
     if (!selectedTeamId) return;
@@ -102,6 +109,17 @@ export default function ChampionshipDetailPage() {
     }
   };
 
+  const handleFinish = async () => {
+    if (!confirm('Tem certeza que deseja encerrar este campeonato? Esta ação não pode ser desfeita.')) return;
+    setError('');
+    try {
+      await championshipApi.finish(Number(id));
+      loadChamp();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro');
+    }
+  };
+
   const statusBadge = (s: string) => {
     const labels: Record<string, string> = { SCHEDULED: 'Agendado', LIVE: 'Ao Vivo', PAUSED: 'Pausado', FINISHED: 'Finalizado' };
     return <span className={`badge badge-${s.toLowerCase()}`}>{labels[s] || s}</span>;
@@ -133,6 +151,9 @@ export default function ChampionshipDetailPage() {
             <Link to={`/statistics/${champ.id}`} className="btn">📊 Estatísticas</Link>
             {isManager && isDraft && (
               <button className="btn btn-danger btn-sm" onClick={handleDelete}>Excluir</button>
+            )}
+            {isManager && isStarted && (
+              <button className="btn btn-danger" onClick={handleFinish}>🏁 Encerrar Campeonato</button>
             )}
           </div>
         </div>
@@ -200,6 +221,71 @@ export default function ChampionshipDetailPage() {
           </div>
         )}
 
+        {/* Ranking - shown when championship is finished */}
+        {isFinished && champStats && champStats.standings && champStats.standings.length > 0 && (
+          <div className="card" style={{ border: '2px solid var(--primary)', background: 'var(--bg-card)' }}>
+            <div className="card-header">
+              <span className="card-title">🏆 Ranking Final</span>
+            </div>
+            <div className="table-container">
+              <table className="standings-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th style={{ textAlign: 'left' }}>Time</th>
+                    <th>J</th>
+                    <th>V</th>
+                    <th>E</th>
+                    <th>D</th>
+                    <th>GP</th>
+                    <th>GC</th>
+                    <th>SG</th>
+                    <th>PTS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {champStats.standings.map((s, i) => (
+                    <tr key={s.teamId} style={i === 0 ? { background: 'var(--primary)', color: 'white', fontWeight: 700 } : {}}>
+                      <td className={i === 0 ? '' : 'standings-pos'}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td>
+                      <td style={{ textAlign: 'left', fontWeight: 500 }}>{s.teamName}</td>
+                      <td>{s.played}</td>
+                      <td>{s.wins}</td>
+                      <td>{s.draws}</td>
+                      <td>{s.losses}</td>
+                      <td>{s.goalsFor}</td>
+                      <td>{s.goalsAgainst}</td>
+                      <td>{s.goalDifference}</td>
+                      <td><strong>{s.points}</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {champStats.topScorers && champStats.topScorers.length > 0 && (
+              <div style={{ marginTop: '1.5rem' }}>
+                <span className="card-title">⚽ Artilharia</span>
+                <div className="table-container" style={{ marginTop: '0.5rem' }}>
+                  <table>
+                    <thead>
+                      <tr><th>#</th><th>Jogador</th><th>Time</th><th>Gols</th></tr>
+                    </thead>
+                    <tbody>
+                      {champStats.topScorers.map((s, i) => (
+                        <tr key={s.playerId}>
+                          <td><strong>{i + 1}</strong></td>
+                          <td>{s.playerName}</td>
+                          <td>{s.teamName}</td>
+                          <td><strong>{s.goals}</strong></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Matches */}
         {(isStarted || champ.status === 'FINISHED') && (
           <div className="card">
@@ -213,7 +299,7 @@ export default function ChampionshipDetailPage() {
             </div>
 
             {showCreateMatch && (
-              <form onSubmit={handleCreateMatch} className="card" style={{ background: '#f6f8fa', marginBottom: '1rem' }}>
+              <form onSubmit={handleCreateMatch} className="card" style={{ background: 'var(--bg-card-alt)', marginBottom: '1rem' }}>
                 <div className="grid grid-2">
                   <div className="form-group">
                     <label>Time Casa</label>

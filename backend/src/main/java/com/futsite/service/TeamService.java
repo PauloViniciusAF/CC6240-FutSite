@@ -3,7 +3,6 @@ package com.futsite.service;
 import com.futsite.dto.request.AddTeamMemberRequest;
 import com.futsite.dto.request.CreateTeamRequest;
 import com.futsite.dto.response.TeamResponse;
-import com.futsite.dto.response.UserResponse;
 import com.futsite.exception.BadRequestException;
 import com.futsite.exception.ResourceNotFoundException;
 import com.futsite.model.entity.Team;
@@ -29,6 +28,7 @@ public class TeamService {
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final AuthService authService;
 
     @Transactional
     public TeamResponse createTeam(CreateTeamRequest request, String captainUsername) {
@@ -160,11 +160,11 @@ public class TeamService {
         emailService.notifyAthleteAddedToTeam(athlete.getEmail(), athlete.getFullName(), team.getName());
     }
 
-    public static TeamResponse toTeamResponse(Team team) {
+    public TeamResponse toTeamResponse(Team team) {
         List<TeamResponse.TeamMemberResponse> memberResponses = team.getMembers() != null
                 ? team.getMembers().stream().map(m -> TeamResponse.TeamMemberResponse.builder()
                     .id(m.getId())
-                    .athlete(AuthService.toUserResponse(m.getAthlete()))
+                    .athlete(authService.toUserResponse(m.getAthlete()))
                     .jerseyNumber(m.getJerseyNumber())
                     .build()).collect(Collectors.toList())
                 : new ArrayList<>();
@@ -173,7 +173,7 @@ public class TeamService {
                 .id(team.getId())
                 .name(team.getName())
                 .sport(team.getSport())
-                .captain(AuthService.toUserResponse(team.getCaptain()))
+                .captain(authService.toUserResponse(team.getCaptain()))
                 .members(memberResponses)
                 .build();
     }

@@ -61,6 +61,7 @@ export const championshipApi = {
   getAll: () => api.get<Championship[]>('/championships'),
   getMy: () => api.get<Championship[]>('/championships/my-championships'),
   delete: (champId: number) => api.delete(`/championships/${champId}`),
+  finish: (champId: number) => api.post<Championship>(`/championships/${champId}/finish`),
 };
 
 // ============ MATCHES ============
@@ -76,7 +77,7 @@ export const matchApi = {
   adjustTimer: (matchId: number, deltaSeconds: number) =>
     api.post<MatchTimer>(`/matches/${matchId}/timer/adjust?deltaSeconds=${deltaSeconds}`),
   recordGoal: (matchId: number, data: {
-    teamId: number; scorerId?: number; ownGoal: boolean; minute: number; second?: number;
+    teamId: number; scorerId?: number; ownGoal: boolean; minute?: number; second?: number;
   }) => api.post<Goal>(`/matches/${matchId}/goals`, data),
   getTimer: (matchId: number) => api.get<MatchTimer>(`/matches/${matchId}/timer`),
   get: (matchId: number) => api.get<Match>(`/matches/${matchId}`),
