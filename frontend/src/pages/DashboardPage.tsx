@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import Navbar from '../components/Navbar';
 import { teamApi, championshipApi } from '../api';
 import type { Team, Championship } from '../types';
 
@@ -26,7 +25,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Navbar />
       <div className="main-content">
         <div className="page-header">
           <h1>Bem-vindo, {user?.fullName}!</h1>

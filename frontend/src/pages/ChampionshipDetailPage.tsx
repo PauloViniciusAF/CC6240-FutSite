@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import { championshipApi, teamApi, matchApi, statsApi } from '../api';
 import { useAuth } from '../AuthContext';
 import type { Championship, Team, Match as MatchType, ChampionshipStatistics } from '../types';
@@ -125,14 +124,13 @@ export default function ChampionshipDetailPage() {
     return <span className={`badge badge-${s.toLowerCase()}`}>{labels[s] || s}</span>;
   };
 
-  if (!champ) return <><Navbar /><div className="main-content">Carregando...</div></>;
+  if (!champ) return <><div className="main-content">Carregando...</div></>;
 
   const champTeamIds = new Set(champ.teams.map(t => t.id));
   const availableTeams = allTeams.filter(t => !champTeamIds.has(t.id));
 
   return (
     <>
-      <Navbar />
       <div className="main-content">
         <div className="page-header">
           <div>

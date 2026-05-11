@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import { teamApi, authApi } from '../api';
 import { useAuth } from '../AuthContext';
 import type { Team, User } from '../types';
@@ -50,14 +49,13 @@ export default function TeamDetailPage() {
     }
   };
 
-  if (!team) return <><Navbar /><div className="main-content">Carregando...</div></>;
+  if (!team) return <><div className="main-content">Carregando...</div></>;
 
   const memberIds = new Set(team.members.map(m => m.athlete.id));
   const availableAthletes = athletes.filter(a => !memberIds.has(a.id));
 
   return (
     <>
-      <Navbar />
       <div className="main-content">
         <div className="page-header">
           <div>

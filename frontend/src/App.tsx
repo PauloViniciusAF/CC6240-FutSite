@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -73,7 +74,9 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <div className="app-container">
+          <Navbar />
           <AppRoutes />
+          <Footer />
         </div>
       </AuthProvider>
     </BrowserRouter>

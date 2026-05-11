@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -24,6 +25,10 @@ public class DatabaseStatusService {
     private final DataSource dataSource;
     private final Optional<MongoTemplate> mongoTemplate;
     private final Optional<StringRedisTemplate> redisTemplate;
+
+    private static final String POSTGRES_CONTAINER = "postgres";
+    private static final String MONGO_CONTAINER = "mongo";
+    private static final String REDIS_CONTAINER = "redis";
 
     public DatabaseStatusResponse getDatabaseStatus() {
         try {
@@ -44,9 +49,9 @@ public class DatabaseStatusService {
             log.error("Error in getDatabaseStatus", e);
             return DatabaseStatusResponse.builder()
                     .timestamp(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                    .postgres(PostgresStatusResponse.builder().status("DOWN").message("Error: " + e.getMessage()).responseTimeMs(0L).build())
-                    .mongo(MongoStatusResponse.builder().status("DOWN").message("Error: " + e.getMessage()).responseTimeMs(0L).build())
-                    .redis(RedisStatusResponse.builder().status("DOWN").message("Error: " + e.getMessage()).responseTimeMs(0L).build())
+                    .postgres(PostgresStatusResponse.builder().status("INACTIVE").message("Error: " + e.getMessage()).responseTimeMs(0L).checkCommand("pg_isready -h localhost -p 5432").build())
+                    .mongo(MongoStatusResponse.builder().status("INACTIVE").message("Error: " + e.getMessage()).responseTimeMs(0L).checkCommand("nc -zvv localhost 27017").build())
+                    .redis(RedisStatusResponse.builder().status("INACTIVE").message("Error: " + e.getMessage()).responseTimeMs(0L).checkCommand("redis-cli ping").build())
                     .overallStatus("DOWN")
                     .build();
         }
@@ -55,6 +60,7 @@ public class DatabaseStatusService {
     private PostgresStatusResponse checkPostgresStatus() {
         long startTime = System.currentTimeMillis();
         try {
+            // Try connection first
             Connection connection = dataSource.getConnection();
             boolean isValid = connection.isValid(5);
             long responseTime = System.currentTimeMillis() - startTime;
@@ -64,28 +70,38 @@ public class DatabaseStatusService {
                 String connString = connection.getMetaData().getURL();
                 connection.close();
                 
+                String uptime = getContainerUptime(POSTGRES_CONTAINER);
+                
                 return PostgresStatusResponse.builder()
-                        .status("UP")
+                        .status("ACTIVE")
                         .connection(connString)
                         .database(database)
                         .connectionPoolSize(getPostgresPoolSize())
                         .responseTimeMs(responseTime)
+                        .uptime(uptime)
+                        .checkCommand("pg_isready -h localhost -p 5432")
                         .message("PostgreSQL is running and healthy")
                         .build();
             } else {
                 connection.close();
+                String uptime = getContainerUptime(POSTGRES_CONTAINER);
                 return PostgresStatusResponse.builder()
-                        .status("DOWN")
+                        .status("INACTIVE")
                         .responseTimeMs(responseTime)
+                        .uptime(uptime)
+                        .checkCommand("pg_isready -h localhost -p 5432")
                         .message("PostgreSQL connection validation failed")
                         .build();
             }
         } catch (Exception e) {
             long responseTime = System.currentTimeMillis() - startTime;
             log.error("PostgreSQL check error", e);
+            String uptime = getContainerUptime(POSTGRES_CONTAINER);
             return PostgresStatusResponse.builder()
-                    .status("DOWN")
+                    .status("INACTIVE")
                     .responseTimeMs(responseTime)
+                    .uptime(uptime)
+                    .checkCommand("pg_isready -h localhost -p 5432")
                     .message("PostgreSQL error: " + e.getMessage())
                     .build();
         }
@@ -96,29 +112,38 @@ public class DatabaseStatusService {
         try {
             if (!mongoTemplate.isPresent()) {
                 long responseTime = System.currentTimeMillis() - startTime;
+                String uptime = getContainerUptime(MONGO_CONTAINER);
                 return MongoStatusResponse.builder()
-                        .status("DOWN")
+                        .status("INACTIVE")
                         .responseTimeMs(responseTime)
+                        .uptime(uptime)
+                        .checkCommand("nc -zvv localhost 27017")
                         .message("MongoDB template not configured")
                         .build();
             }
             
             mongoTemplate.get().executeCommand("{ ping: 1 }");
             long responseTime = System.currentTimeMillis() - startTime;
+            String uptime = getContainerUptime(MONGO_CONTAINER);
             
             return MongoStatusResponse.builder()
-                    .status("UP")
+                    .status("ACTIVE")
                     .connection("mongodb://localhost:27017")
                     .database("futsite")
                     .responseTimeMs(responseTime)
+                    .uptime(uptime)
+                    .checkCommand("nc -zvv localhost 27017")
                     .message("MongoDB is running and healthy")
                     .build();
         } catch (Exception e) {
             long responseTime = System.currentTimeMillis() - startTime;
             log.error("MongoDB check error", e);
+            String uptime = getContainerUptime(MONGO_CONTAINER);
             return MongoStatusResponse.builder()
-                    .status("DOWN")
+                    .status("INACTIVE")
                     .responseTimeMs(responseTime)
+                    .uptime(uptime)
+                    .checkCommand("nc -zvv localhost 27017")
                     .message("MongoDB error: " + e.getMessage())
                     .build();
         }
@@ -129,9 +154,12 @@ public class DatabaseStatusService {
         try {
             if (!redisTemplate.isPresent()) {
                 long responseTime = System.currentTimeMillis() - startTime;
+                String uptime = getContainerUptime(REDIS_CONTAINER);
                 return RedisStatusResponse.builder()
-                        .status("DOWN")
+                        .status("INACTIVE")
                         .responseTimeMs(responseTime)
+                        .uptime(uptime)
+                        .checkCommand("redis-cli ping")
                         .message("Redis template not configured")
                         .build();
             }
@@ -140,29 +168,73 @@ public class DatabaseStatusService {
                     .getConnection()
                     .ping();
             long responseTime = System.currentTimeMillis() - startTime;
+            String uptime = getContainerUptime(REDIS_CONTAINER);
             
             if ("PONG".equalsIgnoreCase(pong)) {
                 return RedisStatusResponse.builder()
-                        .status("UP")
+                        .status("ACTIVE")
                         .connection("redis://localhost:6379")
                         .responseTimeMs(responseTime)
+                        .uptime(uptime)
+                        .checkCommand("redis-cli ping")
                         .message("Redis is running and healthy")
                         .build();
             } else {
                 return RedisStatusResponse.builder()
-                        .status("DOWN")
+                        .status("INACTIVE")
                         .responseTimeMs(responseTime)
+                        .uptime(uptime)
+                        .checkCommand("redis-cli ping")
                         .message("Redis ping returned unexpected response")
                         .build();
             }
         } catch (Exception e) {
             long responseTime = System.currentTimeMillis() - startTime;
             log.error("Redis check error", e);
+            String uptime = getContainerUptime(REDIS_CONTAINER);
             return RedisStatusResponse.builder()
-                    .status("DOWN")
+                    .status("INACTIVE")
                     .responseTimeMs(responseTime)
+                    .uptime(uptime)
+                    .checkCommand("redis-cli ping")
                     .message("Redis error: " + e.getMessage())
                     .build();
+        }
+    }
+
+    private String getContainerUptime(String containerName) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("docker", "ps", 
+                    "--format", "table {{.Names}}\\t{{.Status}}", 
+                    "--filter", "name=" + containerName);
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            
+            boolean completed = process.waitFor(5, TimeUnit.SECONDS);
+            if (!completed) {
+                process.destroyForcibly();
+                return "Unknown";
+            }
+            
+            String output = new String(process.getInputStream().readAllBytes());
+            String[] lines = output.split("\n");
+            
+            // Skip header line and find container
+            for (int i = 1; i < lines.length; i++) {
+                String line = lines[i].trim();
+                if (line.contains(containerName)) {
+                    String[] parts = line.split("\\s+", 2);
+                    if (parts.length > 1) {
+                        String status = parts[1];
+                        // Extract uptime from status like "Up 2 days" or "Up 3 hours"
+                        return status;
+                    }
+                }
+            }
+            return "Not running";
+        } catch (Exception e) {
+            log.debug("Error getting container uptime for {}: {}", containerName, e.getMessage());
+            return "Unknown";
         }
     }
 
@@ -180,13 +252,13 @@ public class DatabaseStatusService {
     private String determineOverallStatus(PostgresStatusResponse postgres, 
                                          MongoStatusResponse mongo, 
                                          RedisStatusResponse redis) {
-        boolean postgresUp = "UP".equals(postgres.getStatus());
-        boolean mongoUp = "UP".equals(mongo.getStatus());
-        boolean redisUp = "UP".equals(redis.getStatus());
+        boolean postgresActive = "ACTIVE".equals(postgres.getStatus());
+        boolean mongoActive = "ACTIVE".equals(mongo.getStatus());
+        boolean redisActive = "ACTIVE".equals(redis.getStatus());
 
-        if (postgresUp && mongoUp && redisUp) {
+        if (postgresActive && mongoActive && redisActive) {
             return "HEALTHY";
-        } else if (postgresUp || mongoUp || redisUp) {
+        } else if (postgresActive || mongoActive || redisActive) {
             return "DEGRADED";
         } else {
             return "DOWN";

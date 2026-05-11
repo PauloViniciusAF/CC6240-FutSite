@@ -122,8 +122,8 @@ export const statsApi = {
 export const databaseApi = {
   login: (username: string, password: string) =>
     api.post<{ token: string; message: string }>('/database/login', { username, password }),
-  getStatus: (token: string) =>
-    api.get('/database/status', { headers: { 'X-Database-Token': token } }),
+  getStatus: () =>
+    api.get('/database/status'),
   ping: () => api.get('/database/status/ping'),
 };
 

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import { teamApi } from '../api';
 import type { Team } from '../types';
 
@@ -13,7 +12,6 @@ export default function TeamsPage() {
 
   return (
     <>
-      <Navbar />
       <div className="main-content">
         <div className="page-header">
           <h1>Times</h1>

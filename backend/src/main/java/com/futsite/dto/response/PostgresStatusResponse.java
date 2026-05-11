@@ -10,10 +10,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PostgresStatusResponse {
-    private String status; // "UP" or "DOWN"
+    private String status; // "ACTIVE" or "INACTIVE"
     private String connection;
     private String database;
     private Long connectionPoolSize;
     private Long responseTimeMs;
     private String message;
+    private String uptime; // e.g., "2 days"
+    private String checkCommand; // e.g., "pg_isready -h localhost -p 5432"
 }

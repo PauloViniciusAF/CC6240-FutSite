@@ -1,369 +1,224 @@
-/* TUI Dark Theme for Database Page */
+/* Database Page - Clean TUI Design */
 
-* {
-  box-sizing: border-box;
+.db-container {
+  padding: 2rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', 'Courier', monospace;
+  min-height: calc(100vh - 112px);
 }
 
-.db-login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: #0a0a0a;
-  padding: 20px;
-  font-family: 'Courier New', monospace;
-  color: #00ff00;
+.db-header {
+  margin-bottom: 2rem;
+  text-align: center;
+  border: 2px solid var(--primary);
+  padding: 1.5rem;
+  background: var(--bg-card);
 }
 
-.db-login-card {
-  background: #1a1a1a;
-  border: 2px solid #00ff00;
-  padding: 30px;
-  width: 100%;
-  max-width: 450px;
-  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-}
-
-.db-login-header {
-  margin-bottom: 25px;
-}
-
-.db-login-header pre {
-  margin: 0;
-  font-size: 12px;
-  color: #00ff00;
+.db-header h1 {
+  font-size: 2rem;
+  color: var(--primary);
+  margin: 0 0 0.5rem 0;
   letter-spacing: 1px;
-}
-
-.db-error-message {
-  background-color: #330000;
-  border: 1px solid #ff0000;
-  color: #ff6666;
-  padding: 12px;
-  margin-bottom: 20px;
-  font-size: 13px;
-  font-family: 'Courier New', monospace;
-}
-
-.db-login-form {
-  margin-bottom: 20px;
-}
-
-.db-form-group {
-  margin-bottom: 18px;
-}
-
-.db-form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 700;
-  color: #00ff00;
-  font-size: 13px;
-  font-family: 'Courier New', monospace;
-}
-
-.db-form-group input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #00ff00;
-  background-color: #0a0a0a;
-  color: #00ff00;
-  font-size: 13px;
-  font-family: 'Courier New', monospace;
-  transition: box-shadow 0.3s;
-}
-
-.db-form-group input:focus {
-  outline: none;
-  border-color: #00ffff;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-  color: #00ffff;
-}
-
-.db-form-group input:disabled {
-  background-color: #111;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.db-form-group input::placeholder {
-  color: #666;
-}
-
-.db-btn {
-  padding: 10px 20px;
-  border: 1px solid #00ff00;
-  background-color: transparent;
-  color: #00ff00;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Courier New', monospace;
-  letter-spacing: 0.5px;
-}
-
-.db-btn:hover:not(:disabled) {
-  background-color: #00ff00;
-  color: #0a0a0a;
-  box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
-}
-
-.db-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.db-btn-primary {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.db-btn-logout {
-  border-color: #ff6600;
-  color: #ff6600;
-}
-
-.db-btn-logout:hover:not(:disabled) {
-  background-color: #ff6600;
-  color: #0a0a0a;
-  box-shadow: 0 0 15px rgba(255, 102, 0, 0.6);
-}
-
-.db-hints {
-  background-color: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 0;
-  padding: 15px;
-  font-size: 12px;
-  color: #00aa00;
-  font-family: 'Courier New', monospace;
-  margin-top: 20px;
-}
-
-.db-hints pre {
-  margin: 5px 0;
-  font-size: 12px;
-}
-
-/* Dashboard Styles */
-.db-dashboard-container {
-  background-color: #0a0a0a;
-  min-height: 100vh;
-  padding: 20px;
-  font-family: 'Courier New', monospace;
-  color: #00ff00;
-}
-
-.db-dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 30px;
-  border: 2px solid #00ff00;
-  padding: 15px;
-  background: #1a1a1a;
-  box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
-}
-
-.db-dashboard-header pre {
-  margin: 0;
-  font-size: 12px;
-  color: #00ff00;
-  letter-spacing: 1px;
-}
-
-.db-main-content {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.db-databases-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 20px;
-}
-
-.db-database-card {
-  background: #1a1a1a;
-  border: 1px solid #00ff00;
-  padding: 0;
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
-}
-
-.db-card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-bottom: 1px solid #333;
-  background: #0f0f0f;
-}
-
-.db-status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-  animation: pulse 2s infinite;
-}
-
-.db-status-dot.db-status-up,
-.db-status-dot.db-status-healthy {
-  background-color: #00ff00;
-  box-shadow: 0 0 8px #00ff00;
-}
-
-.db-status-dot.db-status-down,
-.db-status-dot.db-status-degraded {
-  background-color: #ff0000;
-  box-shadow: 0 0 8px #ff0000;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.db-card-title {
-  flex: 1;
-  font-weight: 700;
-  font-size: 14px;
-  color: #00ff00;
-}
-
-.db-response-time {
-  font-size: 12px;
-  color: #ffaa00;
-  font-weight: 700;
-}
-
-.db-chart-container {
-  padding: 15px;
-  min-height: 220px;
-  background: #0a0a0a;
-}
-
-.db-chart-container svg {
-  filter: drop-shadow(0 0 2px rgba(0, 255, 0, 0.2));
-}
-
-.db-card-info {
-  padding: 12px;
-  border-top: 1px solid #333;
-  background: #0f0f0f;
-  font-size: 12px;
-}
-
-.db-info-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  color: #00cc00;
-}
-
-.db-info-row span:first-child {
-  color: #00ff00;
-  font-weight: 700;
-}
-
-.db-overall-status {
-  border: 2px solid #00ff00;
-  padding: 20px;
-  background: #1a1a1a;
-  box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
-}
-
-.db-status-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  font-weight: 700;
-  color: #00ff00;
-  margin-bottom: 10px;
 }
 
 .db-last-update {
-  font-size: 12px;
-  color: #00aa00;
-  margin-top: 10px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
 }
 
-/* Recharts customization */
-.recharts-wrapper {
-  outline: none !important;
+.db-loading,
+.db-error {
+  text-align: center;
+  padding: 3rem 2rem;
+  font-size: 1.2rem;
+  color: var(--text);
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  margin: 2rem auto;
+  max-width: 600px;
 }
 
-.recharts-surface {
-  background-color: transparent !important;
+.db-error {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
-.recharts-text {
+/* Grid Layout */
+.db-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Database Cards */
+.db-card {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 0;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.db-card:hover {
+  border-color: var(--primary);
+}
+
+/* Color Variants - Purple/Indigo theme */
+.db-card-postgres {
+  border-color: #a78bfa;
+}
+
+.db-card-postgres.db-card-active {
+  border-color: var(--primary);
+  background: var(--bg-card);
+}
+
+.db-card-postgres.db-card-inactive {
+  border-color: var(--border);
+}
+
+.db-card-mongo {
+  border-color: #c4b5fd;
+}
+
+.db-card-mongo.db-card-active {
+  border-color: var(--primary-dark);
+  background: var(--bg-card);
+}
+
+.db-card-mongo.db-card-inactive {
+  border-color: var(--border);
+}
+
+.db-card-redis {
+  border-color: #a78bfa;
+}
+
+.db-card-redis.db-card-active {
+  border-color: var(--primary);
+  background: var(--bg-card);
+}
+
+.db-card-redis.db-card-inactive {
+  border-color: var(--border);
+}
+
+/* Card Header */
+.db-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  gap: 1rem;
+}
+
+.db-card-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Status Badge */
+.db-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.db-status-badge.db-status-active {
+  background: rgba(26, 127, 55, 0.1);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.db-status-badge.db-status-inactive {
+  background: rgba(207, 34, 46, 0.1);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Card Body */
+.db-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 1rem;
+}
+
+/* Info Items */
+.db-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-card-alt);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
   font-family: 'Courier New', monospace;
-  font-size: 11px;
 }
 
-.recharts-tooltip-wrapper {
-  outline: none !important;
+.db-info-item:last-child {
+  border-bottom: none;
 }
 
-.recharts-tooltip-label {
-  color: #00ff00 !important;
+.db-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.db-value {
+  color: var(--text);
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  text-align: right;
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
-  .db-databases-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-}
-
 @media (max-width: 768px) {
-  .db-dashboard-header {
-    flex-direction: column;
-    gap: 15px;
+  .db-container {
+    padding: 1rem;
   }
 
-  .db-databases-grid {
+  .db-header {
+    padding: 1rem;
+  }
+
+  .db-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .db-grid {
     grid-template-columns: 1fr;
-  }
-
-  .db-login-card {
-    max-width: 100%;
-  }
-
-  .db-login-header pre,
-  .db-dashboard-header pre {
-    font-size: 11px;
-  }
-
-  .db-btn {
-    padding: 8px 16px;
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .db-dashboard-container {
-    padding: 10px;
-  }
-
-  .db-dashboard-header {
-    padding: 10px;
+    gap: 1rem;
   }
 
   .db-card-header {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .db-response-time {
-    width: 100%;
-    margin-top: 5px;
+  .db-card-header h2 {
+    font-size: 1rem;
+  }
+
+  .db-status-badge {
+    align-self: flex-start;
   }
 }

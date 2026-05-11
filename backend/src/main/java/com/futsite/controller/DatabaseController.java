@@ -46,14 +46,8 @@ public class DatabaseController {
     }
 
     @GetMapping("/status")
-    public ResponseEntity<?> getStatus(@RequestHeader(value = "X-Database-Token", required = false) String token) {
-        log.debug("Database status request received with token: {}", token);
-        
-        if (!DATABASE_TOKEN.equals(token)) {
-            log.warn("Invalid token provided");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Invalid or missing token"));
-        }
+    public ResponseEntity<?> getStatus() {
+        log.debug("Database status request received");
 
         try {
             DatabaseStatusResponse status = databaseStatusService.getDatabaseStatus();

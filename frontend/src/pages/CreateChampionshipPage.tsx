@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import { championshipApi } from '../api';
 import type { ChampionshipFormat } from '../types';
 
@@ -44,7 +43,6 @@ export default function CreateChampionshipPage() {
 
   return (
     <>
-      <Navbar />
       <div className="main-content" style={{ maxWidth: '600px' }}>
         <h1 style={{ marginBottom: '1.5rem' }}>Criar Campeonato</h1>
         {error && <div className="error-message">{error}</div>}

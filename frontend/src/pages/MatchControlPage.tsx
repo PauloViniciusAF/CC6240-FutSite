@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import { matchApi } from '../api';
 import type { Match, User } from '../types';
 
@@ -116,7 +115,7 @@ export default function MatchControlPage() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  if (!match) return <><Navbar /><div className="main-content">Carregando...</div></>;
+  if (!match) return <><div className="main-content">Carregando...</div></>;
 
   const allPlayers = [
     ...(match.homeTeam.members || []).map(m => ({ ...m.athlete, teamId: match.homeTeam.id, teamName: match.homeTeam.name })),
@@ -130,7 +129,6 @@ export default function MatchControlPage() {
 
   return (
     <>
-      <Navbar />
       <div className="main-content" style={{ maxWidth: '800px' }}>
         {error && <div className="error-message">{error}</div>}
 

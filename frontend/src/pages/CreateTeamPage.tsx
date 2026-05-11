@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import { teamApi } from '../api';
 
 export default function CreateTeamPage() {
@@ -22,7 +21,6 @@ export default function CreateTeamPage() {
 
   return (
     <>
-      <Navbar />
       <div className="main-content" style={{ maxWidth: '600px' }}>
         <h1 style={{ marginBottom: '1.5rem' }}>Criar Novo Time</h1>
         {error && <div className="error-message">{error}</div>}

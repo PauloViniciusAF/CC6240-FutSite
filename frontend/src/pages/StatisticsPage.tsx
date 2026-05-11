@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import { statsApi } from '../api';
 import type { ChampionshipStatistics, MatchStatistics } from '../types';
 
@@ -17,7 +16,6 @@ export default function StatisticsPage() {
 
   return (
     <>
-      <Navbar />
       <div className="main-content">
         <div className="page-header">
           <h1>📊 Estatísticas{champStats ? ` — ${champStats.championshipName}` : ''}</h1>

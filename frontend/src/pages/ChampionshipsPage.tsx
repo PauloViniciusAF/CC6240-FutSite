@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import { championshipApi } from '../api';
 import type { Championship } from '../types';
 
@@ -20,7 +19,6 @@ export default function ChampionshipsPage() {
 
   return (
     <>
-      <Navbar />
       <div className="main-content">
         <div className="page-header">
           <h1>Campeonatos</h1>

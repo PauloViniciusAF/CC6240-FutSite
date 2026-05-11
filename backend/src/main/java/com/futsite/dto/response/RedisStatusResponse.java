@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RedisStatusResponse {
-    private String status; // "UP" or "DOWN"
+    private String status; // "ACTIVE" or "INACTIVE"
     private String connection;
     private Long responseTimeMs;
     private String message;
+    private String uptime; // e.g., "2 days"
+    private String checkCommand; // e.g., "redis-cli ping"
 }

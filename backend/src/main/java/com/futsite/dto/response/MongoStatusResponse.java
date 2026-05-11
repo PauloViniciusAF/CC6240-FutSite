@@ -10,9 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MongoStatusResponse {
-    private String status; // "UP" or "DOWN"
+    private String status; // "ACTIVE" or "INACTIVE"
     private String connection;
     private String database;
     private Long responseTimeMs;
     private String message;
+    private String uptime; // e.g., "2 days"
+    private String checkCommand; // e.g., "nc -zvv localhost 27017"
 }
