@@ -17,6 +17,30 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor to handle database errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Check for database connection errors
+    if (error.response?.status === 503 || error.response?.status === 500) {
+      const errorMsg = error.response?.data?.message || error.message || '';
+      
+      // Identify which database is down
+      if (errorMsg.includes('PostgreSQL') || errorMsg.includes('postgres')) {
+        error.message = 'PostgreSQL database is unavailable. Please try again later.';
+      } else if (errorMsg.includes('MongoDB') || errorMsg.includes('mongo')) {
+        error.message = 'MongoDB database is unavailable. Please try again later.';
+      } else if (errorMsg.includes('Redis') || errorMsg.includes('redis')) {
+        error.message = 'Redis cache service is unavailable. Please try again later.';
+      } else if (error.code === 'ECONNREFUSED' || error.message.includes('Connection refused')) {
+        error.message = 'Backend server is unavailable. Please try again later.';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 // ============ AUTH ============
 export const authApi = {
   register: (data: { username: string; email: string; password: string; fullName: string; role: string }) =>
@@ -79,7 +103,6 @@ export const matchApi = {
   recordGoal: (matchId: number, data: {
     teamId: number; scorerId?: number; ownGoal: boolean; minute?: number; second?: number;
   }) => api.post<Goal>(`/matches/${matchId}/goals`, data),
-  getTimer: (matchId: number) => api.get<MatchTimer>(`/matches/${matchId}/timer`),
   get: (matchId: number) => api.get<Match>(`/matches/${matchId}`),
   getByChampionship: (champId: number) => api.get<Match[]>(`/matches/championship/${champId}`),
   getByRound: (champId: number, round: number) =>
@@ -93,6 +116,15 @@ export const statsApi = {
     api.get<ChampionshipStatistics>(`/statistics/championship/${champId}`),
   getChampionshipMatches: (champId: number) =>
     api.get<MatchStatistics[]>(`/statistics/championship/${champId}/matches`),
+};
+
+// ============ DATABASE MONITORING ============
+export const databaseApi = {
+  login: (username: string, password: string) =>
+    api.post<{ token: string; message: string }>('/database/login', { username, password }),
+  getStatus: (token: string) =>
+    api.get('/database/status', { headers: { 'X-Database-Token': token } }),
+  ping: () => api.get('/database/status/ping'),
 };
 
 export default api;

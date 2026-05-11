@@ -170,7 +170,6 @@ public class ChampionshipService {
         }
 
         // Generate first round matches
-        int firstRound = teamCount / 2; // number of matches in first round
         int roundNumber = teamCount; // e.g., 16 for oitavas
 
         for (int i = 0; i < orderedTeams.size(); i += 2) {

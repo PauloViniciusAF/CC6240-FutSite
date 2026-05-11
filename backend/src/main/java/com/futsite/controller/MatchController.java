@@ -4,7 +4,6 @@ import com.futsite.dto.request.CreateMatchRequest;
 import com.futsite.dto.request.RecordGoalRequest;
 import com.futsite.dto.response.GoalResponse;
 import com.futsite.dto.response.MatchResponse;
-import com.futsite.dto.response.MatchTimerResponse;
 import com.futsite.service.MatchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -58,25 +57,12 @@ public class MatchController {
         return ResponseEntity.ok(matchService.finishMatch(matchId, userDetails.getUsername()));
     }
 
-    @PostMapping("/{matchId}/timer/adjust")
-    public ResponseEntity<MatchTimerResponse> adjustTimer(
-            @PathVariable Long matchId,
-            @RequestParam int deltaSeconds,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(matchService.adjustTimer(matchId, deltaSeconds, userDetails.getUsername()));
-    }
-
     @PostMapping("/{matchId}/goals")
     public ResponseEntity<GoalResponse> recordGoal(
             @PathVariable Long matchId,
             @Valid @RequestBody RecordGoalRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(matchService.recordGoal(matchId, request, userDetails.getUsername()));
-    }
-
-    @GetMapping("/{matchId}/timer")
-    public ResponseEntity<MatchTimerResponse> getTimer(@PathVariable Long matchId) {
-        return ResponseEntity.ok(matchService.getTimer(matchId));
     }
 
     @GetMapping("/{matchId}")

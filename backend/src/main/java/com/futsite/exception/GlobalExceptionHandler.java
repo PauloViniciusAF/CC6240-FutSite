@@ -1,5 +1,7 @@
 package com.futsite.exception;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -28,6 +31,27 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
         return buildResponse(HttpStatus.UNAUTHORIZED, "Invalid username or password");
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleDatabaseError(DataAccessException ex) {
+        log.error("Database access error", ex);
+        String message = "Database connection error. Please check the developer console at /dev";
+        
+        if (ex.getCause() != null) {
+            String cause = ex.getCause().getMessage();
+            if (cause != null) {
+                if (cause.contains("PostgreSQL") || cause.contains("Connection refused")) {
+                    message = "PostgreSQL database is unavailable";
+                } else if (cause.contains("MongoDB") || cause.contains("mongo")) {
+                    message = "MongoDB database is unavailable";
+                } else if (cause.contains("Redis") || cause.contains("redis")) {
+                    message = "Redis cache service is unavailable";
+                }
+            }
+        }
+        
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, message);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -47,6 +71,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+        log.error("Unexpected error", ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
     }
 

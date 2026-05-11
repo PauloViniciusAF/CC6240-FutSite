@@ -2,17 +2,16 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { matchApi } from '../api';
-import type { Match, MatchTimer, User } from '../types';
+import type { Match, User } from '../types';
 
 export default function MatchControlPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [match, setMatch] = useState<Match | null>(null);
-  const [timer, setTimer] = useState<MatchTimer | null>(null);
   const [displayElapsed, setDisplayElapsed] = useState(0);
   const lastSyncRef = useRef<number>(Date.now());
   const syncedElapsedRef = useRef<number>(0);
-  const timerStatusRef = useRef<string>('');
+  const matchStatusRef = useRef<string>('SCHEDULED');
   const [error, setError] = useState('');
 
   // Goal form
@@ -21,36 +20,30 @@ export default function MatchControlPage() {
   const [goalOwnGoal, setGoalOwnGoal] = useState(false);
 
   const loadMatch = useCallback(() => {
-    matchApi.get(Number(id)).then(r => setMatch(r.data)).catch(() => {});
-  }, [id]);
-
-  const loadTimer = useCallback(() => {
-    matchApi.getTimer(Number(id)).then(r => {
-      setTimer(r.data);
-      if (r.data) {
-        syncedElapsedRef.current = r.data.elapsedSeconds;
+    matchApi.get(Number(id)).then(r => {
+      setMatch(r.data);
+      if (r.data.status !== matchStatusRef.current) {
+        matchStatusRef.current = r.data.status;
+        syncedElapsedRef.current = 0;
         lastSyncRef.current = Date.now();
-        timerStatusRef.current = r.data.status;
-        setDisplayElapsed(r.data.elapsedSeconds);
+        setDisplayElapsed(0);
       }
     }).catch(() => {});
   }, [id]);
 
-  // Poll server every 5s for sync
+  // Poll server every 5s to sync match state (status changes, goals, etc)
   useEffect(() => {
     loadMatch();
-    loadTimer();
     const interval = setInterval(() => {
-      loadTimer();
       loadMatch();
     }, 5000);
     return () => clearInterval(interval);
-  }, [id, loadMatch, loadTimer]);
+  }, [id, loadMatch]);
 
-  // Local 1-second tick for smooth display
+  // Local 1-second tick for smooth timer display
   useEffect(() => {
     const tick = setInterval(() => {
-      if (timerStatusRef.current === 'RUNNING') {
+      if (matchStatusRef.current === 'LIVE') {
         const now = Date.now();
         const delta = Math.floor((now - lastSyncRef.current) / 1000);
         setDisplayElapsed(syncedElapsedRef.current + delta);
@@ -63,24 +56,24 @@ export default function MatchControlPage() {
     try {
       const r = await matchApi.start(Number(id));
       setMatch(r.data);
-      loadTimer();
+      matchStatusRef.current = r.data.status;
+      syncedElapsedRef.current = 0;
+      lastSyncRef.current = Date.now();
     } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
   };
   const handlePause = async () => {
     try {
       const r = await matchApi.pause(Number(id));
       setMatch(r.data);
-      timerStatusRef.current = 'PAUSED';
-      loadTimer();
+      matchStatusRef.current = r.data.status;
     } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
   };
   const handleResume = async () => {
     try {
       const r = await matchApi.resume(Number(id));
       setMatch(r.data);
-      timerStatusRef.current = 'RUNNING';
+      matchStatusRef.current = r.data.status;
       lastSyncRef.current = Date.now();
-      loadTimer();
     } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
   };
   const handleFinish = async () => {
@@ -88,12 +81,15 @@ export default function MatchControlPage() {
     try {
       const r = await matchApi.finish(Number(id));
       setMatch(r.data);
-      timerStatusRef.current = 'STOPPED';
-      setTimer(null);
+      matchStatusRef.current = r.data.status;
+      setDisplayElapsed(0);
     } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
   };
   const handleAdjust = async (delta: number) => {
-    try { const r = await matchApi.adjustTimer(Number(id), delta); setTimer(r.data); } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
+    try { 
+      await matchApi.adjustTimer(Number(id), delta); 
+      loadMatch();
+    } catch (e: any) { setError(e.response?.data?.message || 'Erro'); }
   };
 
   const handleGoal = async (e: React.FormEvent) => {
@@ -155,9 +151,9 @@ export default function MatchControlPage() {
             </div>
           </div>
 
-          {timer && (
+          {(isLive || isPaused) && (
             <div className="timer-display">
-              ⏱ {formatTime(displayElapsed)} / {formatTime(timer.totalSeconds)}
+              ⏱ {formatTime(displayElapsed)} / {formatTime(match.durationSeconds)}
             </div>
           )}
 

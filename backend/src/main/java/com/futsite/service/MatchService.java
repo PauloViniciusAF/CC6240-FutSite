@@ -80,8 +80,8 @@ public class MatchService {
         match.setStatus(MatchStatus.LIVE);
         match = matchRepository.save(match);
 
-        // Start timer in Redis
-        redisService.startTimer(matchId, match.getDurationSeconds());
+        // Save start timestamp in Redis (for tracking purposes only)
+        redisService.setMatchStartTime(matchId, System.currentTimeMillis());
 
         return toResponse(match);
     }
@@ -97,7 +97,9 @@ public class MatchService {
 
         match.setStatus(MatchStatus.PAUSED);
         match = matchRepository.save(match);
-        redisService.pauseTimer(matchId);
+        
+        // Save pause timestamp in Redis for tracking
+        redisService.setMatchPauseTime(matchId, System.currentTimeMillis());
 
         return toResponse(match);
     }
@@ -113,17 +115,15 @@ public class MatchService {
 
         match.setStatus(MatchStatus.LIVE);
         match = matchRepository.save(match);
-        redisService.resumeTimer(matchId);
+        
+        // Clear pause time to resume normal flow
+        redisService.clearMatchPauseTime(matchId);
 
         return toResponse(match);
     }
 
-    public MatchTimerResponse adjustTimer(Long matchId, int deltaSeconds, String managerUsername) {
-        Match match = getMatchEntity(matchId);
-        validateMatchManager(match, managerUsername);
-        redisService.adjustTimer(matchId, deltaSeconds);
-        return redisService.getTimerState(matchId);
-    }
+    // NOTE: Timer adjustments are now handled by the frontend incrementally
+    // Backend no longer manages continuous timer, only validates and stores snapshots
 
     @Transactional
     public MatchResponse finishMatch(Long matchId, String managerUsername) {
@@ -137,8 +137,8 @@ public class MatchService {
         match.setStatus(MatchStatus.FINISHED);
         match = matchRepository.save(match);
 
-        // Stop Redis timer
-        redisService.stopTimer(matchId);
+        // Save finish timestamp in Redis
+        redisService.setMatchFinishTime(matchId, System.currentTimeMillis());
 
         // Invalidate standings cache
         redisService.invalidateStandingsCache(match.getChampionship().getId());
@@ -180,20 +180,10 @@ public class MatchService {
                     .orElseThrow(() -> new ResourceNotFoundException("Scorer not found"));
         }
 
-        // Auto-fill minute/second from timer if not provided
-        Integer minute = request.getMinute();
-        Integer second = request.getSecond();
-        if (minute == null) {
-            MatchTimerResponse timer = redisService.getTimerState(matchId);
-            if (timer != null) {
-                int elapsed = timer.getElapsedSeconds();
-                minute = elapsed / 60;
-                second = elapsed % 60;
-            } else {
-                minute = 0;
-                second = 0;
-            }
-        }
+        // Calculate elapsed time from system clock (Redis-backed match timestamps)
+        long elapsedSeconds = redisService.getMatchElapsedSeconds(matchId);
+        int minute = (int) (elapsedSeconds / 60);
+        int second = (int) (elapsedSeconds % 60);
 
         Goal goal = Goal.builder()
                 .match(match)
@@ -229,7 +219,7 @@ public class MatchService {
             if (totalGoals >= match.getGoalLimit()) {
                 match.setStatus(MatchStatus.FINISHED);
                 matchRepository.save(match);
-                redisService.stopTimer(matchId);
+                redisService.setMatchFinishTime(matchId, System.currentTimeMillis());
                 redisService.invalidateStandingsCache(match.getChampionship().getId());
                 try {
                     statisticsService.generateMatchStatistics(match);
@@ -252,9 +242,8 @@ public class MatchService {
                 .build();
     }
 
-    public MatchTimerResponse getTimer(Long matchId) {
-        return redisService.getTimerState(matchId);
-    }
+    // NOTE: Timer state is no longer fetched from backend - frontend maintains incremental timer
+    // This endpoint is kept for potential analytics/debugging purposes but is not used during match play
 
     public MatchResponse getMatch(Long matchId) {
         return toResponse(getMatchEntity(matchId));

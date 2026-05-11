@@ -19,7 +19,6 @@ export default function Navbar() {
         ⚽ FutSite
       </Link>
       <div className="navbar-links">
-        <Link to="/">Dashboard</Link>
         <Link to="/teams">Times</Link>
         <Link to="/championships">Campeonatos</Link>
       </div>

@@ -8,19 +8,23 @@ spring:
     username: futsite
     password: futsite123
     driver-class-name: org.postgresql.Driver
+    hikari:
+      initialization-fail-timeout: 0
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+    defer-datasource-initialization: true
 
   # ============ MongoDB (DB1 - Statistics) ============
   data:
     mongodb:
       uri: mongodb://futsite:futsite123@localhost:27017/futsite?authSource=admin
+      auto-index-creation: false
     redis:
       host: localhost
       port: 6379

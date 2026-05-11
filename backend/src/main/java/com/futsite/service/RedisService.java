@@ -19,6 +19,9 @@ public class RedisService {
 
     private static final String TIMER_PREFIX = "match:timer:";
     private static final String STANDINGS_CACHE_PREFIX = "standings:";
+    private static final String MATCH_START_TIME_PREFIX = "match:start_time:";
+    private static final String MATCH_PAUSE_TIME_PREFIX = "match:pause_time:";
+    private static final String MATCH_FINISH_TIME_PREFIX = "match:finish_time:";
 
     // ====== MATCH TIMER ======
 
@@ -75,6 +78,77 @@ public class RedisService {
         redisTemplate.delete(TIMER_PREFIX + matchId);
     }
 
+    // ====== MATCH TIMING SNAPSHOTS (Optimized Incremental Timer) ======
+
+    /**
+     * Saves the match start timestamp.
+     * Frontend will increment timer locally from this point.
+     */
+    public void setMatchStartTime(Long matchId, Long timestamp) {
+        String key = MATCH_START_TIME_PREFIX + matchId;
+        redisTemplate.opsForValue().set(key, timestamp, 24, TimeUnit.HOURS);
+    }
+
+    /**
+     * Gets the match start timestamp for synchronization purposes.
+     */
+    public Long getMatchStartTime(Long matchId) {
+        String key = MATCH_START_TIME_PREFIX + matchId;
+        Object val = redisTemplate.opsForValue().get(key);
+        if (val instanceof Long) return (Long) val;
+        if (val instanceof Number) return ((Number) val).longValue();
+        if (val instanceof String) return Long.parseLong((String) val);
+        return null;
+    }
+
+    /**
+     * Saves pause timestamp when match is paused.
+     * Frontend can use this to sync pause duration.
+     */
+    public void setMatchPauseTime(Long matchId, Long timestamp) {
+        String key = MATCH_PAUSE_TIME_PREFIX + matchId;
+        redisTemplate.opsForValue().set(key, timestamp, 24, TimeUnit.HOURS);
+    }
+
+    /**
+     * Gets the pause timestamp.
+     */
+    public Long getMatchPauseTime(Long matchId) {
+        String key = MATCH_PAUSE_TIME_PREFIX + matchId;
+        Object val = redisTemplate.opsForValue().get(key);
+        if (val instanceof Long) return (Long) val;
+        if (val instanceof Number) return ((Number) val).longValue();
+        if (val instanceof String) return Long.parseLong((String) val);
+        return null;
+    }
+
+    /**
+     * Clears the pause timestamp when match resumes.
+     */
+    public void clearMatchPauseTime(Long matchId) {
+        redisTemplate.delete(MATCH_PAUSE_TIME_PREFIX + matchId);
+    }
+
+    /**
+     * Saves the match finish timestamp for record-keeping.
+     */
+    public void setMatchFinishTime(Long matchId, Long timestamp) {
+        String key = MATCH_FINISH_TIME_PREFIX + matchId;
+        redisTemplate.opsForValue().set(key, timestamp, 24, TimeUnit.HOURS);
+    }
+
+    /**
+     * Gets the match finish timestamp.
+     */
+    public Long getMatchFinishTime(Long matchId) {
+        String key = MATCH_FINISH_TIME_PREFIX + matchId;
+        Object val = redisTemplate.opsForValue().get(key);
+        if (val instanceof Long) return (Long) val;
+        if (val instanceof Number) return ((Number) val).longValue();
+        if (val instanceof String) return Long.parseLong((String) val);
+        return null;
+    }
+
     private void updateElapsed(Long matchId) {
         String key = TIMER_PREFIX + matchId;
         String status = (String) redisTemplate.opsForHash().get(key, "status");
@@ -104,6 +178,25 @@ public class RedisService {
 
     public void invalidateStandingsCache(Long championshipId) {
         redisTemplate.delete(STANDINGS_CACHE_PREFIX + championshipId);
+    }
+
+    /**
+     * Calculates the elapsed time for a match in seconds.
+     * Accounts for pauses in the match.
+     * If match is paused, returns elapsed time up to the pause moment.
+     * If match is live, returns elapsed time up to now.
+     */
+    public long getMatchElapsedSeconds(Long matchId) {
+        Long startTime = getMatchStartTime(matchId);
+        if (startTime == null) {
+            return 0;
+        }
+        
+        // If paused, calculate time until pause; if live, calculate time until now
+        Long pauseTime = getMatchPauseTime(matchId);
+        long currentTime = pauseTime != null ? pauseTime : System.currentTimeMillis();
+        
+        return (currentTime - startTime) / 1000;
     }
 
     // ====== HELPERS ======

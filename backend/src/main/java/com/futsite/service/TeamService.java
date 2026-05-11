@@ -35,10 +35,6 @@ public class TeamService {
         User captain = userRepository.findByUsername(captainUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (captain.getRole() != UserRole.ATHLETE) {
-            throw new BadRequestException("Only athletes can create teams");
-        }
-
         Team team = Team.builder()
                 .name(request.getName())
                 .sport(request.getSport())

@@ -16,6 +16,10 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      '/dev': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
       '/ws': {
         target: 'http://localhost:8080',
         ws: true,
