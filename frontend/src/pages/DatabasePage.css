@@ -8,6 +8,7 @@
   min-height: calc(100vh - 112px);
 }
 
+/* ── Header ────────────────────────────────────── */
 .db-header {
   margin-bottom: 2rem;
   text-align: center;
@@ -16,19 +17,81 @@
   background: var(--bg-card);
 }
 
-.db-header h1 {
+.db-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.db-title-row h1 {
   font-size: 2rem;
   color: var(--primary);
-  margin: 0 0 0.5rem 0;
+  margin: 0;
   letter-spacing: 1px;
+}
+
+.db-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 1.25rem;
 }
 
 .db-last-update {
   font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-top: 0.5rem;
 }
 
+.db-refreshing-indicator {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  animation: fadePulse 1s ease-in-out infinite;
+}
+
+/* ── Refresh button ────────────────────────────── */
+.db-refresh-btn {
+  background: none;
+  border: 1px solid var(--border);
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
+  line-height: 1;
+  color: var(--text-secondary);
+  border-radius: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.db-refresh-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.db-refresh-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Spin & pulse animations ───────────────────── */
+.db-spin {
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* ── States ────────────────────────────────────── */
 .db-loading,
 .db-error {
   text-align: center;
@@ -46,16 +109,21 @@
   color: var(--danger);
 }
 
-/* Grid Layout */
+/* ── Grid ──────────────────────────────────────── */
 .db-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
+  transition: opacity 0.2s ease;
 }
 
-/* Database Cards */
+.db-grid-refreshing {
+  opacity: 0.6;
+}
+
+/* ── Cards ─────────────────────────────────────── */
 .db-card {
   background: var(--bg-card);
   border: 2px solid var(--border);
@@ -68,47 +136,20 @@
   border-color: var(--primary);
 }
 
-/* Color Variants - Purple/Indigo theme */
-.db-card-postgres {
-  border-color: #a78bfa;
-}
+/* Color variants */
+.db-card-postgres       { border-color: #a78bfa; }
+.db-card-postgres.db-card-active   { border-color: var(--primary); background: var(--bg-card); }
+.db-card-postgres.db-card-inactive { border-color: var(--border); }
 
-.db-card-postgres.db-card-active {
-  border-color: var(--primary);
-  background: var(--bg-card);
-}
+.db-card-mongo          { border-color: #c4b5fd; }
+.db-card-mongo.db-card-active      { border-color: var(--primary-dark); background: var(--bg-card); }
+.db-card-mongo.db-card-inactive    { border-color: var(--border); }
 
-.db-card-postgres.db-card-inactive {
-  border-color: var(--border);
-}
+.db-card-redis          { border-color: #a78bfa; }
+.db-card-redis.db-card-active      { border-color: var(--primary); background: var(--bg-card); }
+.db-card-redis.db-card-inactive    { border-color: var(--border); }
 
-.db-card-mongo {
-  border-color: #c4b5fd;
-}
-
-.db-card-mongo.db-card-active {
-  border-color: var(--primary-dark);
-  background: var(--bg-card);
-}
-
-.db-card-mongo.db-card-inactive {
-  border-color: var(--border);
-}
-
-.db-card-redis {
-  border-color: #a78bfa;
-}
-
-.db-card-redis.db-card-active {
-  border-color: var(--primary);
-  background: var(--bg-card);
-}
-
-.db-card-redis.db-card-inactive {
-  border-color: var(--border);
-}
-
-/* Card Header */
+/* ── Card header ───────────────────────────────── */
 .db-card-header {
   display: flex;
   justify-content: space-between;
@@ -127,7 +168,7 @@
   letter-spacing: 1px;
 }
 
-/* Status Badge */
+/* ── Status badge ──────────────────────────────── */
 .db-status-badge {
   display: inline-flex;
   align-items: center;
@@ -153,7 +194,7 @@
   color: var(--danger);
 }
 
-/* Card Body */
+/* ── Card body ─────────────────────────────────── */
 .db-card-body {
   display: flex;
   flex-direction: column;
@@ -161,7 +202,7 @@
   padding: 1rem;
 }
 
-/* Info Items */
+/* ── Info items ────────────────────────────────── */
 .db-info-item {
   display: flex;
   justify-content: space-between;
@@ -190,7 +231,7 @@
   text-align: right;
 }
 
-/* Responsive Design */
+/* ── Responsive ────────────────────────────────── */
 @media (max-width: 768px) {
   .db-container {
     padding: 1rem;
@@ -200,7 +241,7 @@
     padding: 1rem;
   }
 
-  .db-header h1 {
+  .db-title-row h1 {
     font-size: 1.5rem;
   }
 

@@ -1,5 +1,5 @@
 :root {
-  --primary: #7c3aed;
+  --primary: #272236;
   --primary-dark: #5b21b6;
   --primary-light: #a78bfa;
   --bg: #f6f8fa;
@@ -10,12 +10,12 @@
   --border: #d0d7de;
   --danger: #cf222e;
   --warning: #bf8700;
-  --success: #1a7f37;
+  --success: #5153ff;
   --focus-shadow: rgba(124, 58, 237, 0.2);
 }
 
 [data-theme="dark"] {
-  --primary: #a78bfa;
+  --primary: #452594;
   --primary-dark: #7c3aed;
   --primary-light: #c4b5fd;
   --bg: #0d1117;
@@ -26,7 +26,7 @@
   --border: #30363d;
   --danger: #f85149;
   --warning: #d29922;
-  --success: #3fb950;
+  --success: #5153ff;
   --focus-shadow: rgba(167, 139, 250, 0.3);
 }
 
@@ -175,6 +175,7 @@ button {
   background: var(--bg-card);
   color: var(--text);
   transition: all 0.15s;
+  justify-content: center;
 }
 
 .btn:hover {
@@ -355,6 +356,7 @@ th {
   background: #1f2328;
   color: white;
   border-radius: 12px;
+  justify-content: center;
   padding: 2rem;
   text-align: center;
 }

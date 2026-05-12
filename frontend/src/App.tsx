@@ -53,7 +53,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/database" element={<DatabasePage />} />
+      <Route path="/database" element={<ProtectedRoute><DatabasePage /></ProtectedRoute>} />
       <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
       <Route path="/register" element={user ? <Navigate to="/" /> : <RegisterPage />} />
       <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />

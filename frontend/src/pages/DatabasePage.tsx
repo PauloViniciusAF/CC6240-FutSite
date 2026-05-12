@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { databaseApi } from '../api';
 import './DatabasePage.css';
 
@@ -16,135 +16,136 @@ interface DatabaseStatus {
   redis: DatabaseInfo;
 }
 
+const REFRESH_INTERVAL_MS = 5000;
+
 export default function DatabasePage() {
   const [status, setStatus] = useState<DatabaseStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const isMounted = useRef(true);
 
-  // Auto-refresh effect every 5 seconds
   useEffect(() => {
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 5000);
-    return () => clearInterval(interval);
+    isMounted.current = true;
+    fetchStatus(true);
+
+    const interval = setInterval(() => fetchStatus(false), REFRESH_INTERVAL_MS);
+    return () => {
+      isMounted.current = false;
+      clearInterval(interval);
+    };
   }, []);
 
-  const fetchStatus = async () => {
+  const fetchStatus = async (isInitial: boolean) => {
+    if (isInitial) {
+      setInitialLoading(true);
+    } else {
+      setRefreshing(true);
+    }
+
     try {
-      setLoading(true);
-      setError('');
       const res = await databaseApi.getStatus();
+      if (!isMounted.current) return;
       setStatus(res.data);
+      setLastUpdated(new Date());
+      setError('');
     } catch (err: any) {
-      const errorMsg = 
-        err.response?.data?.error || 
-        err.response?.data?.message || 
-        'Erro ao buscar status dos bancos de dados';
-      setError(errorMsg);
+      if (!isMounted.current) return;
+      // Only show error if we have no previous data to display
+      if (!status) {
+        const errorMsg =
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          'Erro ao buscar status dos bancos de dados';
+        setError(errorMsg);
+      }
       console.error('Error fetching status:', err);
     } finally {
-      setLoading(false);
+      if (!isMounted.current) return;
+      if (isInitial) setInitialLoading(false);
+      setRefreshing(false);
     }
   };
 
-  if (loading && !status) {
-    return (
-      <div className="main-content">
-        <div className="db-container">
-          <div className="db-header">
-            <h1>Database Status</h1>
-          </div>
-          <div className="db-loading">Carregando...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !status) {
-    return (
-      <div className="main-content">
-        <div className="db-container">
-          <div className="db-header">
-            <h1>Database Status</h1>
-          </div>
-          <div className="db-error">{error}</div>
-        </div>
-      </div>
-    );
-  }
+  const handleManualRefresh = () => {
+    fetchStatus(false);
+  };
 
   return (
-    <div className="main-content">
-      <div className="db-container">
-        <div className="db-header">
-          <h1>Database Status</h1>
-          <div className="db-last-update">
-            Última atualização: {status ? new Date(status.timestamp).toLocaleTimeString() : '—'}
+    <>
+      <div className="main-content">
+        <div className="db-container">
+          <div className="db-header">
+            <div className="db-title-row">
+              <h1>Database Status</h1>
+              <button
+                className="db-refresh-btn"
+                onClick={handleManualRefresh}
+                disabled={refreshing || initialLoading}
+                title="Atualizar agora"
+              >
+                <span className={refreshing ? 'db-spin' : ''}>↻</span>
+              </button>
+            </div>
+            <div className="db-meta-row">
+              {refreshing && <span className="db-refreshing-indicator">Atualizando...</span>}
+              <div className="db-last-update">
+                Última atualização:{' '}
+                {lastUpdated ? lastUpdated.toLocaleTimeString('pt-BR') : '—'}
+              </div>
+            </div>
           </div>
+
+          {initialLoading && (
+            <div className="db-loading">Carregando...</div>
+          )}
+
+          {error && !status && (
+            <div className="db-error">{error}</div>
+          )}
+
+          {status && (
+            <div className={`db-grid ${refreshing ? 'db-grid-refreshing' : ''}`}>
+              <DbCard
+                label="PostgreSQL"
+                variant="postgres"
+                info={status.postgres}
+              />
+              <DbCard
+                label="MongoDB"
+                variant="mongo"
+                info={status.mongo}
+              />
+              <DbCard
+                label="Redis"
+                variant="redis"
+                info={status.redis}
+              />
+            </div>
+          )}
         </div>
+      </div>
+    </>
+  );
+}
 
-        {status && (
-          <div className="db-grid">
-            {/* PostgreSQL */}
-            <div className={`db-card db-card-postgres db-card-${status.postgres.status.toLowerCase()}`}>
-              <div className="db-card-header">
-                <h2>PostgreSQL</h2>
-                <span className={`db-status-badge db-status-${status.postgres.status.toLowerCase()}`}>
-                  {status.postgres.status === 'ACTIVE' ? '🟢 Online' : '🔴 Offline'}
-                </span>
-              </div>
-              <div className="db-card-body">
-                <div className="db-info-item">
-                  <span className="db-label">Resposta:</span>
-                  <span className="db-value">{status.postgres.responseTimeMs}ms</span>
-                </div>
-                <div className="db-info-item">
-                  <span className="db-label">Uptime:</span>
-                  <span className="db-value">{status.postgres.uptime}</span>
-                </div>
-              </div>
-            </div>
+interface DbCardProps {
+  label: string;
+  variant: 'postgres' | 'mongo' | 'redis';
+  info: DatabaseInfo;
+}
 
-            {/* MongoDB */}
-            <div className={`db-card db-card-mongo db-card-${status.mongo.status.toLowerCase()}`}>
-              <div className="db-card-header">
-                <h2>MongoDB</h2>
-                <span className={`db-status-badge db-status-${status.mongo.status.toLowerCase()}`}>
-                  {status.mongo.status === 'ACTIVE' ? '🟢 Online' : '🔴 Offline'}
-                </span>
-              </div>
-              <div className="db-card-body">
-                <div className="db-info-item">
-                  <span className="db-label">Resposta:</span>
-                  <span className="db-value">{status.mongo.responseTimeMs}ms</span>
-                </div>
-                <div className="db-info-item">
-                  <span className="db-label">Uptime:</span>
-                  <span className="db-value">{status.mongo.uptime}</span>
-                </div>
-              </div>
-            </div>
+function DbCard({ label, variant, info }: DbCardProps) {
+  const isOnline = info.status === 'ACTIVE';
 
-            {/* Redis */}
-            <div className={`db-card db-card-redis db-card-${status.redis.status.toLowerCase()}`}>
-              <div className="db-card-header">
-                <h2>Redis</h2>
-                <span className={`db-status-badge db-status-${status.redis.status.toLowerCase()}`}>
-                  {status.redis.status === 'ACTIVE' ? '🟢 Online' : '🔴 Offline'}
-                </span>
-              </div>
-              <div className="db-card-body">
-                <div className="db-info-item">
-                  <span className="db-label">Resposta:</span>
-                  <span className="db-value">{status.redis.responseTimeMs}ms</span>
-                </div>
-                <div className="db-info-item">
-                  <span className="db-label">Uptime:</span>
-                  <span className="db-value">{status.redis.uptime}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+  return (
+    <div className={`db-card db-card-${variant} db-card-${info.status.toLowerCase()}`}>
+      <div className="db-card-header">
+        <h2>{label}</h2>
+        <span className={`db-status-badge db-status-${info.status.toLowerCase()}`}>
+          {isOnline ? 'Online' : 'Offline'}
+        </span>
       </div>
     </div>
   );
