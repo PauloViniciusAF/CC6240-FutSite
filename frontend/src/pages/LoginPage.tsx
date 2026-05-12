@@ -25,7 +25,7 @@ export default function LoginPage() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>⚽ FutSite</h1>
+        <h1>⚽ DaChamp</h1>
         <p>Gerenciamento de Campeonatos Esportivos</p>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>

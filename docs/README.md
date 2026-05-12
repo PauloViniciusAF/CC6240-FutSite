@@ -1,6 +1,6 @@
-# ⚽ FutSite — Gerenciamento de Campeonatos Esportivos
+# ⚽ DaChamp — Gerenciamento de Campeonatos Esportivos
 
-**Projeto: FutSite**
+**Projeto: DaChamp**
 
 Sistema web completo para criação e gerenciamento de campeonatos esportivos, com suporte a pontos corridos e mata-mata, controle de partidas em tempo real e estatísticas automáticas.
 

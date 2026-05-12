@@ -31,7 +31,7 @@ export default function RegisterPage() {
     <div className="auth-container">
       <div className="auth-card">
         <h1>⚽ Cadastro</h1>
-        <p>Crie sua conta no FutSite</p>
+        <p>Crie sua conta no DaChamp</p>
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
