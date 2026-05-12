@@ -27,7 +27,7 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
-    private final EmailService emailService;
+    //private final EmailService emailService;
     private final AuthService authService;
 
     @Transactional
@@ -153,7 +153,7 @@ public class TeamService {
         teamMemberRepository.save(member);
 
         // Notify athlete by email
-        emailService.notifyAthleteAddedToTeam(athlete.getEmail(), athlete.getFullName(), team.getName());
+        //emailService.notifyAthleteAddedToTeam(athlete.getEmail(), athlete.getFullName(), team.getName());
     }
 
     public TeamResponse toTeamResponse(Team team) {

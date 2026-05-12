@@ -18,32 +18,7 @@ import java.util.Map;
 public class DatabaseController {
 
     private final DatabaseStatusService databaseStatusService;
-    private static final String DATABASE_USERNAME = "dev";
-    private static final String DATABASE_PASSWORD = "dev123";
-    private static final String DATABASE_TOKEN = "database-token-futsite-2024";
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
-        log.info("Database monitoring login attempt - received credentials: {}", credentials.keySet());
-        
-        String username = credentials.get("username");
-        String password = credentials.get("password");
-        
-        log.debug("Username: '{}', Password provided: {}", username, password != null && !password.isEmpty());
-
-        if (!DATABASE_USERNAME.equals(username) || !DATABASE_PASSWORD.equals(password)) {
-            log.warn("Failed login attempt with username: {}", username);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Invalid credentials"));
-        }
-
-        log.info("Successful database monitoring login");
-        Map<String, String> response = new HashMap<>();
-        response.put("token", DATABASE_TOKEN);
-        response.put("message", "Database monitoring login successful");
-        
-        return ResponseEntity.ok(response);
-    }
 
     @GetMapping("/status")
     public ResponseEntity<?> getStatus() {

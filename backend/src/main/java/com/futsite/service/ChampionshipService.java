@@ -129,7 +129,7 @@ public class ChampionshipService {
         championship = championshipRepository.save(championship);
 
         // Notify all athletes
-        notifyAllAthletes(championship);
+        //notifyAllAthletes(championship);
 
         return toResponse(championship);
     }
@@ -306,23 +306,23 @@ public class ChampionshipService {
         championship.getTeams().add(team);
 
         // Notify captain
-        emailService.notifyCaptainTeamRegistered(
-                team.getCaptain().getEmail(),
-                team.getCaptain().getFullName(),
-                team.getName(),
-                championship.getName());
+        // emailService.notifyCaptainTeamRegistered(
+        //         team.getCaptain().getEmail(),
+        //         team.getCaptain().getFullName(),
+        //         team.getName(),
+        //         championship.getName());
     }
 
-    private void notifyAllAthletes(Championship championship) {
-        for (Team team : championship.getTeams()) {
-            for (TeamMember member : team.getMembers()) {
-                emailService.notifyChampionshipStarted(
-                        member.getAthlete().getEmail(),
-                        member.getAthlete().getFullName(),
-                        championship.getName());
-            }
-        }
-    }
+    // private void notifyAllAthletes(Championship championship) {
+    //     for (Team team : championship.getTeams()) {
+    //         for (TeamMember member : team.getMembers()) {
+    //             emailService.notifyChampionshipStarted(
+    //                     member.getAthlete().getEmail(),
+    //                     member.getAthlete().getFullName(),
+    //                     championship.getName());
+    //         }
+    //     }
+    // }
 
     Championship getChampionshipEntity(Long id) {
         return championshipRepository.findById(id)

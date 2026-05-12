@@ -68,7 +68,7 @@ Frontend (React/TS) ←→ Backend (Spring Boot) ←→ PostgreSQL (dados relaci
 | `MatchService` | Controle de partidas, registro de gols | PostgreSQL + Redis |
 | `StatisticsService` | Geração e consulta de estatísticas | MongoDB |
 | `RedisService` | Timer de partida, cache de classificação | Redis |
-| `EmailService` | Envio de notificações por e-mail | — |
+| `EmailService` | Envio de notificações por e-mail | — | (TODO)
 
 ### Endpoints da API (principais):
 
