@@ -4,6 +4,7 @@ import com.futsite.dto.request.LoginRequest;
 import com.futsite.dto.request.RegisterRequest;
 import com.futsite.dto.response.AuthResponse;
 import com.futsite.dto.response.UserResponse;
+import com.futsite.exception.BadRequestException;
 import com.futsite.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,9 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new BadRequestException("User not authenticated");
+        }
         return ResponseEntity.ok(authService.getCurrentUser(userDetails.getUsername()));
     }
 

@@ -26,9 +26,9 @@ public class DatabaseStatusService {
     private final Optional<MongoTemplate> mongoTemplate;
     private final Optional<StringRedisTemplate> redisTemplate;
 
-    private static final String POSTGRES_CONTAINER = "postgres";
-    private static final String MONGO_CONTAINER = "mongo";
-    private static final String REDIS_CONTAINER = "redis";
+    private static final String POSTGRES_CONTAINER = "futsite-postgres";
+    private static final String MONGO_CONTAINER = "futsite-mongo";
+    private static final String REDIS_CONTAINER = "futsite-redis";
 
     public DatabaseStatusResponse getDatabaseStatus() {
         try {
@@ -205,7 +205,7 @@ public class DatabaseStatusService {
     private String getContainerUptime(String containerName) {
         try {
             ProcessBuilder pb = new ProcessBuilder("docker", "ps", 
-                    "--format", "table {{.Names}}\\t{{.Status}}", 
+                    "--format", "table {{.Names}}\t{{.Status}}", 
                     "--filter", "name=" + containerName);
             pb.redirectErrorStream(true);
             Process process = pb.start();
@@ -222,8 +222,9 @@ public class DatabaseStatusService {
             // Skip header line and find container
             for (int i = 1; i < lines.length; i++) {
                 String line = lines[i].trim();
-                if (line.contains(containerName)) {
-                    String[] parts = line.split("\\s+", 2);
+                if (!line.isEmpty() && line.contains(containerName)) {
+                    // Split by tab to get name and status
+                    String[] parts = line.split("\t");
                     if (parts.length > 1) {
                         String status = parts[1];
                         // Extract uptime from status like "Up 2 days" or "Up 3 hours"

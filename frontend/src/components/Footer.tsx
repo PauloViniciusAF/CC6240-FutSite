@@ -8,7 +8,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-content">
         <a 
-          href="https://github.com/CC6240-FutSite/futsite" 
+          href="https://github.com/PauloViniciusAF/CC6240-FutSite" 
           target="_blank" 
           rel="noopener noreferrer"
           className="footer-link"
